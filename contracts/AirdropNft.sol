@@ -39,7 +39,7 @@ contract AirdropNft is ERC721, AccessControl {
         return "https://any-ipfs-url.com";
     }
 
-    function safeMint(address to) public onlyRole(MINTER_ROLE) {
+    function claimNft(address to) public onlyRole(MINTER_ROLE) {
         uint256 tokenId = _tokenIdCounter.current();
         require(tokenId <= MAX_SUPPLY, "All NFT has been airdropped. Sorry !");
         _tokenIdCounter.increment();

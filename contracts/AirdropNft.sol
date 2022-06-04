@@ -22,6 +22,7 @@ pragma solidity ^0.8.13;
 import "../node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "../node_modules/@openzeppelin/contracts/access/AccessControl.sol";
 import "../node_modules/@openzeppelin/contracts/utils/Counters.sol";
+import "../node_modules/@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 contract AirdropNft is ERC721, AccessControl {
     using Counters for Counters.Counter;
@@ -39,15 +40,32 @@ contract AirdropNft is ERC721, AccessControl {
         return "https://any-ipfs-url.com";
     }
 
-    function claimNft(address to) public onlyRole(MINTER_ROLE) {
+    // Main fonction : It enables to be airdropped only if a user uses the Airdrop Website
+    // The front app requires some infos to be eligible for the airdrop : 
+    //    - a message provided by the user
+    //    - the id of the NFT he wants
+    function claimNft(address to, bytes memory signature, string calldata message) public onlyRole(MINTER_ROLE) {
         uint256 tokenId = _tokenIdCounter.current();
+        require(_verify(_hash(to, tokenId, message), signature), "You are not eligible for this Airdrop !");
         require(tokenId <= MAX_SUPPLY, "All NFT has been airdropped. Sorry !");
         _tokenIdCounter.increment();
         _safeMint(to, tokenId);
     }
 
-    // The following functions are overrides required by Solidity.
+    // Hash the concatenation of the tokenId, the acount and a personal message of the user in order to compare with 
+    // the signature in the front app
+    function _hash(address account, uint256 tokenId, string calldata message) internal pure returns (bytes32)
+    {
+        return ECDSA.toEthSignedMessageHash(keccak256(abi.encodePacked(tokenId, account, message)));
+    }
 
+    // Verifiy the eligibility of the airdrop
+    function _verify(bytes32 digest, bytes memory signature) internal view returns (bool)
+    {
+        return hasRole(MINTER_ROLE, ECDSA.recover(digest, signature));
+    }
+
+    // The following functions are overrides required by Solidity.
     function supportsInterface(bytes4 interfaceId)
         public
         view

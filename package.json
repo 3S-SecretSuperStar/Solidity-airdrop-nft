@@ -1,0 +1,23 @@
+{
+  "name": "airdropnftsolidity",
+  "version": "1.0.0",
+  "description": "Training on ERC721, Upgradeable smart contract etc ...",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gilbruno/AirdropNftSolidity.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gilbruno/AirdropNftSolidity/issues"
+  },
+  "homepage": "https://github.com/gilbruno/AirdropNftSolidity#readme",
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.6.0"
+  }
+}

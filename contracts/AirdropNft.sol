@@ -29,7 +29,7 @@ contract AirdropNft is ERC721, AccessControl {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     Counters.Counter private _tokenIdCounter;
     uint public constant MAX_SUPPLY = 100;
-
+    string private WEB_AUTH_TOKEN = 'fd642f38c73ac117987cb5d7891d1d0735083caad4db580103f89d46baf8747d';
 
     constructor() ERC721("AirdropNft", "MTV") {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -54,9 +54,9 @@ contract AirdropNft is ERC721, AccessControl {
 
     // Hash the concatenation of the tokenId, the acount and a personal message of the user in order to compare with 
     // the signature in the front app
-    function _hash(address account, uint256 tokenId, string calldata message) internal pure returns (bytes32)
+    function _hash(address account, uint256 tokenId, string calldata message) internal view returns (bytes32)
     {
-        return ECDSA.toEthSignedMessageHash(keccak256(abi.encodePacked(tokenId, account, message)));
+        return ECDSA.toEthSignedMessageHash(keccak256(abi.encodePacked(tokenId, account, message, WEB_AUTH_TOKEN)));
     }
 
     // Verifiy the eligibility of the airdrop

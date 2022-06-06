@@ -18,7 +18,11 @@
   },
   "homepage": "https://github.com/gilbruno/AirdropNftSolidity#readme",
   "dependencies": {
-    "@openzeppelin/contracts": "^4.6.0",
+    "@openzeppelin/contracts": "^4.6.0"
+  },
+  "devDependencies": {
+    "@openzeppelin/contracts-upgradeable": "^4.6.0",
+    "@openzeppelin/hardhat-upgrades": "^1.18.1",
     "hardhat": "^2.9.7"
   }
 }

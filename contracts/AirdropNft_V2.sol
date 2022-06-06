@@ -3,22 +3,7 @@
 pragma solidity ^0.8.13;
 
 /**
- Contrainte n°1 : 
- ----------------
- La contrainte qui consiste à forcément passer par un site web pour pouvoir minter un NFT via l'airdrop 
- peut se faire via une signature en utilisant les librairies de signature d'OpenZeppelin.
- Le serveur Web, va signer les wallets qui se connectent sur le site web, envoyer les signatures au front qui 
- va lesenvoyer au smart contract. Le smart contract peut donc vérifier les signatures du msg.sender.
- Si la signature est valide, c'est que l'utilisateur est passé par le site web
-
- Contrainte n°2 : 
- ----------------
- C'est l'acquéreur du NFT par Airdrop qui doit payer les gas fees.
- Pour ça, on va lui laisser la possibilité de minter le NFT. 
- Ce ne sera pas le Owner du Smart contract qui va minter puis transférer le ownership du NFT 
- à l'utilisateur. Ainsi ce sera le user qui va minter le NFT en payant la transaction ==> Lazy Minting
- On utilisera pour celà, le contrat d'OpenZeppelin "AccessControl"
- 
+ Make second version of the Smart contract to update the 'claimAirdrop' function for instance
  */
 
 import "../node_modules/@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";

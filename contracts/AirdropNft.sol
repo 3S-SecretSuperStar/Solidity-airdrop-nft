@@ -29,6 +29,7 @@ contract AirdropNft is ERC721, AccessControl {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     Counters.Counter private _tokenIdCounter;
     uint public constant MAX_SUPPLY = 100;
+    //The WEB_AUTH_TOKEN is shared between the webserver of the website and the smart contract
     string private WEB_AUTH_TOKEN = 'fd642f38c73ac117987cb5d7891d1d0735083caad4db580103f89d46baf8747d';
 
     constructor() ERC721("AirdropNft", "MTV") {

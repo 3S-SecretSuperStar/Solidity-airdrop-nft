@@ -35,7 +35,7 @@ contract MyToken is Initializable, ERC721Upgradeable, AccessControlUpgradeable, 
     CountersUpgradeable.Counter private _tokenIdCounter;
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
 
-    uint public constant MAX_SUPPLY = 100;
+    uint256 private max_supply;
 
     //The WEB_AUTH_TOKEN is shared between the webserver of the website and the smart contract
     string private WEB_AUTH_TOKEN;
@@ -62,7 +62,7 @@ contract MyToken is Initializable, ERC721Upgradeable, AccessControlUpgradeable, 
     function claimAirdrop(address to, bytes memory signature, string calldata message) public onlyRole(MINTER_ROLE) {
         uint256 tokenId = _tokenIdCounter.current();
         require(_verify(_hash(to, tokenId, message), signature), "You are not eligible for this Airdrop !");
-        require(tokenId <= MAX_SUPPLY, "All NFT has been airdropped. Sorry !");
+        require(tokenId <= getMaxSupply(), "All NFT has been airdropped. Sorry !");
         _tokenIdCounter.increment();
         _safeMint(to, tokenId);
     }
@@ -74,6 +74,16 @@ contract MyToken is Initializable, ERC721Upgradeable, AccessControlUpgradeable, 
     {
         
     }
+
+    // Get the max Supply for the Airdrop
+    function getMaxSupply() public view onlyRole(DEFAULT_ADMIN_ROLE) returns (uint256){
+        return max_supply;
+    }
+
+    // Set the max Supply for the Airdrop
+    function setMAxSupply(uint256 _max_supply) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        max_supply = _max_supply;
+    } 
 
     function getWebAuthToken() public view onlyRole(DEFAULT_ADMIN_ROLE) returns (string memory){
         return WEB_AUTH_TOKEN;

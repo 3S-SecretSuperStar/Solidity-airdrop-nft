@@ -2,25 +2,6 @@
 
 pragma solidity ^0.8.13;
 
-/**
- Contrainte n°1 : 
- ----------------
- La contrainte qui consiste à forcément passer par un site web pour pouvoir minter un NFT via l'airdrop 
- peut se faire via une signature en utilisant les librairies de signature d'OpenZeppelin.
- Le serveur Web, va signer les wallets qui se connectent sur le site web, envoyer les signatures au front qui 
- va lesenvoyer au smart contract. Le smart contract peut donc vérifier les signatures du msg.sender.
- Si la signature est valide, c'est que l'utilisateur est passé par le site web
-
- Contrainte n°2 : 
- ----------------
- C'est l'acquéreur du NFT par Airdrop qui doit payer les gas fees.
- Pour ça, on va lui laisser la possibilité de minter le NFT. 
- Ce ne sera pas le Owner du Smart contract qui va minter puis transférer le ownership du NFT 
- à l'utilisateur. Ainsi ce sera le user qui va minter le NFT en payant la transaction ==> Lazy Minting
- On utilisera pour celà, le contrat d'OpenZeppelin "AccessControl"
- 
- */
-
 import "../node_modules/@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "../node_modules/@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "../node_modules/@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -59,14 +40,19 @@ contract MyToken is Initializable, ERC721Upgradeable, AccessControlUpgradeable, 
         return "https://metav.rs/airdrop/nft/";
     }
 
-    function claimAirdrop(address to, bytes memory signature, string calldata message) public onlyRole(MINTER_ROLE) {
+    // @param _to : the address of the user that wants to be airdropped
+    // @param _message : the WEB_AUTH_TOKEN = The token that is shared between the website and the smart contract
+    // @param _tokenId : the tokenId to airdrop
+    function claimAirdrop(address _to, bytes memory _signature) public onlyRole(MINTER_ROLE) {
         uint256 tokenId = _tokenIdCounter.current();
-        require(_verify(_hash(to, tokenId, message), signature), "You are not eligible for this Airdrop !");
-        require(tokenId <= getMaxSupply(), "All NFT has been airdropped. Sorry !");
+        string memory message = getWebAuthToken();
+        require(verify(_to, message, tokenId, _signature), "You are not eligible for this Airdrop !");
+        require(tokenId <= getMaxSupply(), "All NFT have been airdropped. Sorry !");
         _tokenIdCounter.increment();
-        _safeMint(to, tokenId);
+        _safeMint(_to, tokenId);
     }
 
+    // @dev : Methods from the OpenZeppelin standrad UUPS
     function _authorizeUpgrade(address newImplementation)
         internal
         onlyRole(UPGRADER_ROLE)
@@ -75,17 +61,17 @@ contract MyToken is Initializable, ERC721Upgradeable, AccessControlUpgradeable, 
         
     }
 
-    // Get the max Supply for the Airdrop
+    // @dev : Get the max Supply for the Airdrop
     function getMaxSupply() public view onlyRole(DEFAULT_ADMIN_ROLE) returns (uint256){
         return max_supply;
     }
 
-    // Set the max Supply for the Airdrop
+    // @dev : Set the max Supply for the Airdrop
     function setMAxSupply(uint256 _max_supply) public onlyRole(DEFAULT_ADMIN_ROLE) {
         max_supply = _max_supply;
     } 
 
-    function getWebAuthToken() public view onlyRole(DEFAULT_ADMIN_ROLE) returns (string memory){
+    function getWebAuthToken() internal view returns (string memory){
         return WEB_AUTH_TOKEN;
     }
 
@@ -94,12 +80,63 @@ contract MyToken is Initializable, ERC721Upgradeable, AccessControlUpgradeable, 
         WEB_AUTH_TOKEN = _webAuthtoken;
     } 
 
-    // Hash the concatenation of the tokenId, the acount and a personal message of the user in order to compare with 
-    // the signature in the front app
-    function _hash(address account, uint256 tokenId, string calldata message) internal view returns (bytes32)
-    {
-        return ECDSA.toEthSignedMessageHash(keccak256(abi.encodePacked(tokenId, account, message, WEB_AUTH_TOKEN)));
+    // @param _to : the user of the website that wants to be airdropped
+    // @param _message : the WEB_AUTH_TOKEN = The token that is shared between the website and the smart contract
+    // @param _tokenId : the tokenId to airdrop
+    function getMessageHash(string memory _message, uint _tokenId) public pure returns (bytes32) {
+        return keccak256(abi.encodePacked(_message, _tokenId));
     }
+
+
+    function getEthSignedMessageHash(bytes32 _messageHash) public pure returns (bytes32)
+    {
+        /*
+        Signature is produced by signing a keccak256 hash with the following format:
+        "\x19Ethereum Signed Message\n" + len(msg) + msg
+        */
+        return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _messageHash));
+    }
+
+    // @param _signer : the address of the user who wants to be airdropped
+    // @return : true if the signer os correctly decode AND has a MINTER_ROLE
+    function verify(address _signer, string memory _message, uint _tokenId, bytes memory signature) public view returns (bool) {
+        bytes32 messageHash = getMessageHash(_message, _tokenId);
+        bytes32 ethSignedMessageHash = getEthSignedMessageHash(messageHash);
+        address signer = recoverSigner(ethSignedMessageHash, signature);
+        return (signer == _signer && hasRole(MINTER_ROLE, signer));
+    }
+
+    // @return : true if the signer matches the signature
+    function recoverSigner(bytes32 _ethSignedMessageHash, bytes memory _signature) public pure returns (address)
+    {
+        (bytes32 r, bytes32 s, uint8 v) = splitSignature(_signature);
+        return ecrecover(_ethSignedMessageHash, v, r, s);
+    }
+
+    function splitSignature(bytes memory sig) public pure returns (bytes32 r, bytes32 s, uint8 v)
+    {
+        require(sig.length == 65, "invalid signature length");
+        assembly {
+            /*
+            First 32 bytes stores the length of the signature
+
+            add(sig, 32) = pointer of sig + 32
+            effectively, skips first 32 bytes of signature
+
+            mload(p) loads next 32 bytes starting at the memory address p into memory
+            */
+
+            // first 32 bytes, after the length prefix
+            r := mload(add(sig, 32))
+            // second 32 bytes
+            s := mload(add(sig, 64))
+            // final byte (first byte of the next 32 bytes)
+            v := byte(0, mload(add(sig, 96)))
+        }
+
+        // implicitly return (r, s, v)
+    }
+
 
     // Verifiy the eligibility of the airdrop
     function _verify(bytes32 digest, bytes memory signature) internal view returns (bool)

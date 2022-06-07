@@ -1,3 +1,4 @@
+require("dotenv").config();
 const { expect } = require("chai")
 const { ethers } = require("hardhat")
 
@@ -11,13 +12,23 @@ describe("VerifySignature", function () {
 
     // const PRIV_KEY = "0x..."
     // const signer = new ethers.Wallet(PRIV_KEY)
+    //GET the value of the WEB_AUTH_TOKEN  in the .env file
+    const WEB_AUTH_TOKEN = process.env.WEB_AUTH_TOKEN
+    console.log('WEB_AUTH_TOKEN : '+WEB_AUTH_TOKEN)
     const signer = accounts[0]
-    const to = accounts[1].address
-    const amount = 999
-    const message = "Hello"
-    const nonce = 123
+    let to = accounts[1].address
+    //const amount = 999
+    const message = WEB_AUTH_TOKEN
+    const tokenId = "12"
 
-    const hash = await contract.getMessageHash(to, amount, message, nonce)
+    to = ethers.utils.getAddress(to)
+
+    //Hash with smart contract
+    const hash = await contract.getMessageHash(message, tokenId)
+    //Hash with ether.js
+    to = ethers.utils.getAddress(to)
+    const hash_front = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(message+tokenId))
+
     const sig = await signer.signMessage(ethers.utils.arrayify(hash))
 
     const ethHash = await contract.getEthSignedMessageHash(hash)
@@ -27,12 +38,12 @@ describe("VerifySignature", function () {
 
     // Correct signature and message returns true
     expect(
-      await contract.verify(signer.address, to, amount, message, nonce, sig)
+      await contract.verify(signer.address, message, tokenId, sig)
     ).to.equal(true)
 
     // Incorrect message returns false
     expect(
-      await contract.verify(signer.address, to, amount + 1, message, nonce, sig)
+      await contract.verify(signer.address, message+'0', tokenId, sig)
     ).to.equal(false)
   })
 })

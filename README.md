@@ -1,5 +1,6 @@
 # AirdropNftSolidity Description
-Training on ERC721, Upgradeable smart contract etc ...
+This project is a coding/brainstorming challenge with some constraints described below.
+It enables me to train on ERC721, Upgradeable smart contract, Roles, OpenZeppelin standards, etc ...
 
 ## Constraints for this project
 

@@ -25,7 +25,8 @@ Training on ERC721, Upgradeable smart contract etc ...
 
 
 ## Proposed Solution
-I wrote the _AirdropNft.sol_ smart contract like a model for the contraints I was given.
+The main smart contract for this challenge is **AirdropNft.sol** smart contract.
+This contract is a model for the constraints I was given.
 This contract was not tested so it probably doesn't work. 
 It's just a model written for a challenge and to learn about all NDT standards.
 

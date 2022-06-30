@@ -48,8 +48,8 @@ contract MyToken is Initializable, ERC721Upgradeable, AccessControlUpgradeable, 
         string memory message = getWebAuthToken();
         require(verify(_to, message, tokenId, _signature), "You are not eligible for this Airdrop !");
         require(tokenId <= getMaxSupply(), "All NFT have been airdropped. Sorry !");
-        _tokenIdCounter.increment();
         _safeMint(_to, tokenId);
+        _tokenIdCounter.increment();
     }
 
     // @dev : Methods from the OpenZeppelin standrad UUPS
